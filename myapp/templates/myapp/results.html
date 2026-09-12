@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>MNIST Classifier &mdash; Result</title>
+</head>
+<body>
+    <nav>
+        <a href="{% url 'about' %}">The Network</a>
+        <a href="{% url 'upload' %}">Classify</a>
+        <a href="{% url 'logout' %}">Log out</a>
+    </nav>
+
+    {% if error %}
+        <p class="error"><strong>Error:</strong> {{ error }}</p>
+        <p><a href="{% url 'upload' %}">Back to upload</a></p>
+    {% else %}
+        <h1>Result</h1>
+
+        <img src="{{ image_base64 }}" alt="Uploaded digit">
+
+        <p>Predicted digit: <strong>{{ predicted_digit }}</strong></p>
+        <p>Confidence: {{ confidence }}</p>
+
+        <h2>All probabilities</h2>
+        <table>
+            {% for digit, pct, label in bars %}
+                <tr>
+                    <td>{{ digit }}</td>
+                    <td><div class="bar" style="width: {{ pct }}%">&nbsp;</div></td>
+                    <td>{{ label }}</td>
+                </tr>
+            {% endfor %}
+        </table>
+
+        <p><a href="{% url 'start_over' %}">Classify another digit</a></p>
+    {% endif %}
+</body>
+</html>

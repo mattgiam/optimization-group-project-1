@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>MNIST Classifier &mdash; Classify</title>
+</head>
+<body>
+    <nav>
+        <a href="{% url 'about' %}">The Network</a>
+        <a href="{% url 'upload' %}">Classify</a>
+        <a href="{% url 'logout' %}">Log out</a>
+    </nav>
+
+    <h1>Classify a Handwritten Digit</h1>
+    <p>Upload a 28&times;28 CSV of pixel intensities.</p>
+
+    {% if error %}
+        <p class="error"><strong>Error:</strong> {{ error }}</p>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <p>
+            <label for="{{ form.csv_file.id_for_label }}">{{ form.csv_file.label }}</label>
+            {{ form.csv_file }}
+        </p>
+        <p class="help">{{ form.csv_file.help_text }}</p>
+        <button type="submit">Upload and Classify</button>
+    </form>
+
+    <h2>CSV format</h2>
+    <ul>
+        <li>Exactly 28 rows and 28 columns</li>
+        <li>No header row</li>
+        <li>Pixel values 0&ndash;255 or 0&ndash;1 (detected automatically)</li>
+        <li>Comma separated</li>
+    </ul>
+</body>
+</html>

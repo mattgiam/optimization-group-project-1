@@ -1,0 +1,10 @@
+# Pinned to the exact versions this was built and tested against.
+# Per the assignment spec: tensorflow-cpu, not tensorflow, to keep the
+# Docker image small on a free-tier Lightsail instance.
+Django==6.1.1
+tensorflow-cpu==2.21.0
+numpy==2.4.4
+matplotlib==3.10.8
+
+# Add a production WSGI server for the Docker image, e.g.:
+# gunicorn==23.0.0

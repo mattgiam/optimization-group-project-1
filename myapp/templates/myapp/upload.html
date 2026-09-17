@@ -1,39 +1,104 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <title>MNIST Classifier &mdash; Classify</title>
-</head>
-<body>
-    <nav>
-        <a href="{% url 'about' %}">The Network</a>
-        <a href="{% url 'upload' %}">Classify</a>
-        <a href="{% url 'logout' %}">Log out</a>
-    </nav>
+{% extends "myapp/base.html" %}
 
-    <h1>Classify a Handwritten Digit</h1>
-    <p>Upload a 28&times;28 CSV of pixel intensities.</p>
+{% block title %}Classify a digit — MNIST Classifier{% endblock %}
+{% block nav_upload %}is-active{% endblock %}
 
-    {% if error %}
-        <p class="error"><strong>Error:</strong> {{ error }}</p>
-    {% endif %}
+{% block content %}
+<div class="classify-wrap">
+  <h1>Try it yourself</h1>
 
-    <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        <p>
-            <label for="{{ form.csv_file.id_for_label }}">{{ form.csv_file.label }}</label>
-            {{ form.csv_file }}
-        </p>
-        <p class="help">{{ form.csv_file.help_text }}</p>
-        <button type="submit">Upload and Classify</button>
-    </form>
+  <p class="classify-intro">
+    Upload a CSV of a single handwritten digit and the model will classify it.
+  </p>
 
-    <h2>CSV format</h2>
-    <ul>
-        <li>Exactly 28 rows and 28 columns</li>
-        <li>No header row</li>
-        <li>Pixel values 0&ndash;255 or 0&ndash;1 (detected automatically)</li>
-        <li>Comma separated</li>
-    </ul>
-</body>
-</html>
+  <div class="format-note">
+    <strong>File format:</strong> a plain <code>.csv</code> with exactly
+    28 rows and 28 columns, with no header row.
+    Each cell should contain one pixel value, either 0–255 or 0–1.
+    The backend detects the scale automatically.
+  </div>
+
+  {% if error %}
+    <div class="alert alert-error">{{ error }}</div>
+  {% endif %}
+
+  <form
+    method="post"
+    enctype="multipart/form-data"
+    action="{% url 'upload' %}"
+    id="upload-form"
+  >
+    {% csrf_token %}
+
+    <div class="upload-zone" id="upload-zone">
+      <p>Drop a CSV here, or choose a file</p>
+
+      {{ form.csv_file }}
+
+      <span class="file-name" id="file-name-display"></span>
+    </div>
+
+    <p class="help">{{ form.csv_file.help_text }}</p>
+
+    <div class="classify-actions">
+      <button type="submit" class="btn">Classify image</button>
+
+      <span class="loading-note" id="loading-note">
+        <span class="spinner"></span>
+        Running the model&hellip;
+      </span>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  (function () {
+    var zone = document.getElementById('upload-zone');
+    var input = document.getElementById('{{ form.csv_file.id_for_label }}');
+    var nameDisplay = document.getElementById('file-name-display');
+    var form = document.getElementById('upload-form');
+    var loadingNote = document.getElementById('loading-note');
+
+    function showName(file) {
+      nameDisplay.textContent = file ? file.name : '';
+    }
+
+    input.addEventListener('change', function () {
+      showName(input.files[0]);
+    });
+
+    ['dragenter', 'dragover'].forEach(function (evt) {
+      zone.addEventListener(evt, function (e) {
+        e.preventDefault();
+        zone.classList.add('is-dragover');
+      });
+    });
+
+    ['dragleave', 'drop'].forEach(function (evt) {
+      zone.addEventListener(evt, function (e) {
+        e.preventDefault();
+        zone.classList.remove('is-dragover');
+      });
+    });
+
+    zone.addEventListener('drop', function (e) {
+      var files = e.dataTransfer.files;
+
+      if (files.length) {
+        input.files = files;
+        showName(files[0]);
+      }
+    });
+
+    form.addEventListener('submit', function () {
+      loadingNote.classList.add('is-visible');
+      form.querySelector('button[type="submit"]').setAttribute(
+        'disabled',
+        'disabled'
+      );
+    });
+  })();
+</script>
+{% endblock %}

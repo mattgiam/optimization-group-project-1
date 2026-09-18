@@ -23,9 +23,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-uj+hx6jzkl#q@1zkdr8%26=@atotn#um7-+7lj4wqbk1!+tp)3'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -42,6 +42,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -116,7 +117,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
@@ -130,3 +131,19 @@ LOGOUT_REDIRECT_URL = 'login'
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880   # 5 MB
 FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880
+
+
+
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+
+
+STORAGES = {
+
+    'staticfiles': {
+
+        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+
+    },
+
+}

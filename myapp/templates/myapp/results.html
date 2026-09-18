@@ -1,110 +1,46 @@
 {% extends "myapp/base.html" %}
-
-{% block title %}Results — MNIST Classifier{% endblock %}
+{% load static %}
+{% block title %}Result — MNIST Classifier{% endblock %}
 {% block nav_upload %}is-active{% endblock %}
 
 {% block content %}
 <div class="classify-wrap">
+  <h1>Result</h1>
 
   {% if error %}
-
-    <h1>Something went wrong</h1>
-
-    <div class="alert alert-error">
-      {{ error }}
-    </div>
-
-    <div class="classify-actions">
-      <a href="{% url 'upload' %}" class="btn btn-secondary">
-        Back to upload
-      </a>
-    </div>
-
+    <div class="alert alert-error">{{ error }}</div>
+    <a href="{% url 'upload' %}" class="btn btn-secondary">Back to upload</a>
   {% else %}
-
-    <h1>Classification result</h1>
-
-    <div class="result-panel">
-
+    <div class="result-panel" style="border-top: none; margin-top: 0; padding-top: 0;">
       <div>
         <div class="result-image">
-          <img
-            src="{{ image_base64 }}"
-            alt="Rendered preview of the uploaded digit"
-          >
+          <img src="{{ image_base64 }}" alt="Rendered preview of the uploaded pixel grid">
         </div>
-
-        <p class="result-image-caption">
-          what the model saw
-        </p>
+        <p class="result-image-caption">what the model saw</p>
       </div>
 
       <div>
-
         <div class="result-headline">
-
-          <span class="predicted-digit">
-            {{ predicted_digit }}
-          </span>
-
+          <span class="predicted-digit">{{ predicted_digit }}</span>
           <div class="predicted-meta">
-
-            <span class="predicted-label">
-              predicted digit
-            </span>
-
-            <span class="predicted-confidence">
-              {{ confidence }} confidence
-            </span>
-
+            <span class="predicted-label">predicted digit</span>
+            <span class="predicted-confidence">{{ confidence }} confidence</span>
           </div>
         </div>
 
         <div class="confidence-list">
-
           {% for digit, pct, label in bars %}
-
           <div class="confidence-row{% if digit == predicted_digit %} is-predicted{% endif %}">
-
-            <span class="digit-label">
-              {{ digit }}
-            </span>
-
-            <span class="confidence-track">
-
-              <span
-                class="confidence-fill"
-                style="width: {{ pct }}%"
-              ></span>
-
-            </span>
-
-            <span class="confidence-pct">
-              {{ label }}
-            </span>
-
+            <span class="digit-label">{{ digit }}</span>
+            <span class="confidence-track"><span class="confidence-fill" style="width: {{ pct }}%"></span></span>
+            <span class="confidence-pct">{{ label }}</span>
           </div>
-
           {% endfor %}
-
         </div>
 
-        <div class="classify-actions" style="margin-top: 24px;">
-
-          <a
-            href="{% url 'start_over' %}"
-            class="btn btn-secondary"
-          >
-            Start over
-          </a>
-
-        </div>
-
+        <a href="{% url 'start_over' %}" class="btn btn-secondary" style="display: inline-block; margin-top: 24px;">Start over</a>
       </div>
-
     </div>
-
   {% endif %}
-
 </div>
 {% endblock %}

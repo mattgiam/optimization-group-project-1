@@ -1,7 +1,7 @@
-{% extends "base.html" %}
+{% extends "myapp/base.html" %}
 {% load static %}
 {% block title %}How we taught a network to read handwriting &mdash; MNIST Classifier{% endblock %}
-{% block nav_article %}is-active{% endblock %}
+{% block nav_about %}is-active{% endblock %}
 
 {% block content %}
 <article>
@@ -19,17 +19,51 @@
     <p>Rather than guess at a final architecture, we started with the simplest possible network and changed exactly one thing at a time, judging every attempt on validation accuracy (a 20% split held out from training).</p>
 
     <ol class="tuning-log">
-      {% for step in tuning_log %}
-      <li{% if step.val_accuracy == best_val_accuracy %} class="is-winner"{% endif %}>
-        <span class="step-number">{{ forloop.counter }}</span>
+      <li>
+        <span class="step-number">1</span>
         <div class="step-content">
-          <p class="step-name">{{ step.name }}</p>
-          <p class="step-detail">{{ step.detail }}</p>
-          <p class="step-note">{{ step.note }}</p>
+          <p class="step-name">Dense baseline</p>
+          <p class="step-detail">Flatten &rarr; Dense(128) &rarr; Dropout &rarr; Dense(64) &rarr; Dense(10)</p>
+          <p class="step-note">No convolution yet &mdash; just a number to beat.</p>
         </div>
-        <span class="step-score">{{ step.val_accuracy }}%</span>
+        <span class="step-score">97.71%</span>
       </li>
-      {% endfor %}
+      <li>
+        <span class="step-number">2</span>
+        <div class="step-content">
+          <p class="step-name">Add convolution</p>
+          <p class="step-detail">Conv(32, 3&times;3) &rarr; MaxPool &rarr; Dense(128) &rarr; Dense(10)</p>
+          <p class="step-note">One conv block already beats the dense net by almost a point.</p>
+        </div>
+        <span class="step-score">98.55%</span>
+      </li>
+      <li>
+        <span class="step-number">3</span>
+        <div class="step-content">
+          <p class="step-name">Go deeper</p>
+          <p class="step-detail">Two conv/pool blocks (32 then 64 filters) before flattening</p>
+          <p class="step-note">Checked the flatten size (7&times;7&times;64 = 3,136) to confirm we hadn't over-pooled.</p>
+        </div>
+        <span class="step-score">99.00%</span>
+      </li>
+      <li>
+        <span class="step-number">4</span>
+        <div class="step-content">
+          <p class="step-name">Fight overfitting</p>
+          <p class="step-detail">Same shape, with dropout after each block and before the output layer</p>
+          <p class="step-note">Training accuracy had started running ahead of validation &mdash; dropout closed the gap.</p>
+        </div>
+        <span class="step-score">99.23%</span>
+      </li>
+      <li class="is-winner">
+        <span class="step-number">5</span>
+        <div class="step-content">
+          <p class="step-name">BatchNorm + double conv</p>
+          <p class="step-detail">Two conv+BatchNorm layers per block, smaller batch size (128)</p>
+          <p class="step-note">The winner. Epoch 1's validation accuracy briefly cratered to ~28% before batch norm settled in.</p>
+        </div>
+        <span class="step-score">99.39%</span>
+      </li>
     </ol>
 
     <p>Two patterns showed up repeatedly. First, the assignment's tip held up in practice: stacking more, smaller convolutional layers helped more than making any single layer bigger. Second, once the network had enough capacity to fit the training set well, the gap between training and validation accuracy became the thing to watch &mdash; dropout and batch normalization each closed that gap in different ways, and batch norm's rocky first epoch (validation accuracy briefly fell to around 28% before recovering) was a reminder that "the first epoch looks broken" isn't always a sign to abandon a change.</p>
@@ -103,11 +137,11 @@
 
     <div class="stat-row">
       <div class="stat">
-        <span class="stat-value">{{ test_accuracy }}%</span>
+        <span class="stat-value">99.5%</span>
         <span class="stat-label">test accuracy</span>
       </div>
       <div class="stat">
-        <span class="stat-value">{{ test_wrong }}&thinsp;/&thinsp;{{ test_total }}</span>
+        <span class="stat-value">50&thinsp;/&thinsp;10000</span>
         <span class="stat-label">digits misclassified</span>
       </div>
     </div>
@@ -118,14 +152,14 @@
     <p>Of 10,000 test digits, 50 were misclassified. Here are 15 of them, labeled with what they actually were and what the network guessed instead:</p>
 
     <figure>
-      <img src="{% static 'classifier/images/misclassified.png' %}" alt="Grid of 15 misclassified MNIST digits, each labeled with its true label and the model's prediction">
+      <img src="{% static 'myapp/images/misclassified.png' %}" alt="Grid of 15 misclassified MNIST digits, each labeled with its true label and the model's prediction">
       <figcaption>Misclassified test digits &mdash; true label vs. predicted label.</figcaption>
     </figure>
 
     <p>Looking through the full confusion matrix makes the pattern clearer than any individual example:</p>
 
     <figure>
-      <img src="{% static 'classifier/images/confusion_matrix.png' %}" alt="Confusion matrix of true vs predicted digit labels on the MNIST test set">
+      <img src="{% static 'myapp/images/confusion_matrix.png' %}" alt="Confusion matrix of true vs predicted digit labels on the MNIST test set">
       <figcaption>Confusion matrix on the test set. Almost everything sits on the diagonal.</figcaption>
     </figure>
 
@@ -134,13 +168,11 @@
         <tr><th>Mix-up</th><th>True &rarr; predicted</th><th>Count</th></tr>
       </thead>
       <tbody>
-        {% for m in mixups %}
-        <tr>
-          <td class="mixup-pair">{{ m.true }} &rarr; {{ m.pred }}</td>
-          <td>digit {{ m.true }} read as {{ m.pred }}</td>
-          <td>{{ m.count }}</td>
-        </tr>
-        {% endfor %}
+        <tr><td class="mixup-pair">4 &rarr; 9</td><td>digit 4 read as 9</td><td>6</td></tr>
+        <tr><td class="mixup-pair">9 &rarr; 4</td><td>digit 9 read as 4</td><td>5</td></tr>
+        <tr><td class="mixup-pair">5 &rarr; 3</td><td>digit 5 read as 3</td><td>4</td></tr>
+        <tr><td class="mixup-pair">7 &rarr; 2</td><td>digit 7 read as 2</td><td>3</td></tr>
+        <tr><td class="mixup-pair">7 &rarr; 1</td><td>digit 7 read as 1</td><td>3</td></tr>
       </tbody>
     </table>
 
@@ -150,7 +182,7 @@
     <p>Realistically, no. MNIST's test set contains a small number of images that are ambiguous or, by most people's reading, mislabeled. A model that scored 100% on this exact test set would be fitting that label noise, not learning to read digits better. Published results on MNIST plateau around 99.7&ndash;99.8% for exactly this reason, which puts our 99.5% in a reasonable, non-overfit range for a project-scale model rather than a heavily-tuned research pipeline.</p>
 
     <div class="placeholder-block">
-      Pending from Person A: a matched gallery of well-classified, high-confidence digits (one per class) to sit alongside the misclassified grid above, per the assignment spec. Drop the exported PNG into <code>classifier/static/classifier/images/</code> and it slots in here.
+      Pending from Person A: a matched gallery of well-classified, high-confidence digits (one per class) to sit alongside the misclassified grid above, per the assignment spec. Drop the exported PNG into <code>myapp/static/myapp/images/</code> and swap this block for an &lt;img&gt; tag once it exists.
     </div>
   </div>
 </article>

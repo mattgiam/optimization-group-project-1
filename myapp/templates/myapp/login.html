@@ -10,19 +10,19 @@
     <h1>Sign in to view the project</h1>
     <p class="login-copy">This site is restricted to the course team and the grader. There's no self-serve signup &mdash; use the account you were given.</p>
 
-    {% if form.errors %}
-      <div class="alert alert-error">That username and password didn't match. Try again.</div>
+    {% if form.non_field_errors %}
+      <div class="alert alert-error">{{ form.non_field_errors.0 }}</div>
     {% endif %}
 
     <form method="post" action="{% url 'login' %}" class="login-form">
       {% csrf_token %}
       <div class="field">
-        <label for="id_username">Username</label>
-        <input type="text" name="username" id="id_username" autocomplete="username" autofocus required>
+        <label for="{{ form.username.id_for_label }}">Username</label>
+        {{ form.username }}
       </div>
       <div class="field">
-        <label for="id_password">Password</label>
-        <input type="password" name="password" id="id_password" autocomplete="current-password" required>
+        <label for="{{ form.password.id_for_label }}">Password</label>
+        {{ form.password }}
       </div>
       <input type="hidden" name="next" value="{{ next }}">
       <button type="submit" class="btn">Sign in</button>

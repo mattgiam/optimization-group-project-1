@@ -1,0 +1,189 @@
+{% extends "myapp/base.html" %}
+{% load static %}
+{% block title %}How we taught a network to read handwriting &mdash; MNIST Classifier{% endblock %}
+{% block nav_about %}is-active{% endblock %}
+
+{% block content %}
+<article>
+  <div class="article-hero">
+    <p class="article-meta">Group Project 1 &middot; Image Classification</p>
+    <h1>Teaching a network to read handwritten digits</h1>
+    <p class="article-dek">Five architectures, one dataset, and the difference between 97.7% and 99.5%.</p>
+  </div>
+
+  <div class="article-body">
+    <p>MNIST is 70,000 small grayscale images of handwritten digits, each one a 28&times;28 grid of pixel intensities. The goal for this project was simple to state and harder to hit: build a network that classifies these digits correctly more than 99% of the time. We got there, then kept going &mdash; the final model scores 99.5% on digits it never trained on.</p>
+    <p>What follows is the path we took to get there: the architectures we tried, what each one told us about what to fix next, and what the model still gets wrong.</p>
+
+    <h2>Starting simple, adding one idea at a time</h2>
+    <p>Rather than guess at a final architecture, we started with the simplest possible network and changed exactly one thing at a time, judging every attempt on validation accuracy (a 20% split held out from training).</p>
+
+    <ol class="tuning-log">
+      <li>
+        <span class="step-number">1</span>
+        <div class="step-content">
+          <p class="step-name">Dense baseline</p>
+          <p class="step-detail">Flatten &rarr; Dense(128) &rarr; Dropout &rarr; Dense(64) &rarr; Dense(10)</p>
+          <p class="step-note">No convolution yet &mdash; just a number to beat.</p>
+        </div>
+        <span class="step-score">97.71%</span>
+      </li>
+      <li>
+        <span class="step-number">2</span>
+        <div class="step-content">
+          <p class="step-name">Add convolution</p>
+          <p class="step-detail">Conv(32, 3&times;3) &rarr; MaxPool &rarr; Dense(128) &rarr; Dense(10)</p>
+          <p class="step-note">One conv block already beats the dense net by almost a point.</p>
+        </div>
+        <span class="step-score">98.55%</span>
+      </li>
+      <li>
+        <span class="step-number">3</span>
+        <div class="step-content">
+          <p class="step-name">Go deeper</p>
+          <p class="step-detail">Two conv/pool blocks (32 then 64 filters) before flattening</p>
+          <p class="step-note">Checked the flatten size (7&times;7&times;64 = 3,136) to confirm we hadn't over-pooled.</p>
+        </div>
+        <span class="step-score">99.00%</span>
+      </li>
+      <li>
+        <span class="step-number">4</span>
+        <div class="step-content">
+          <p class="step-name">Fight overfitting</p>
+          <p class="step-detail">Same shape, with dropout after each block and before the output layer</p>
+          <p class="step-note">Training accuracy had started running ahead of validation &mdash; dropout closed the gap.</p>
+        </div>
+        <span class="step-score">99.23%</span>
+      </li>
+      <li class="is-winner">
+        <span class="step-number">5</span>
+        <div class="step-content">
+          <p class="step-name">BatchNorm + double conv</p>
+          <p class="step-detail">Two conv+BatchNorm layers per block, smaller batch size (128)</p>
+          <p class="step-note">The winner. Epoch 1's validation accuracy briefly cratered to ~28% before batch norm settled in.</p>
+        </div>
+        <span class="step-score">99.39%</span>
+      </li>
+    </ol>
+
+    <p>Two patterns showed up repeatedly. First, the assignment's tip held up in practice: stacking more, smaller convolutional layers helped more than making any single layer bigger. Second, once the network had enough capacity to fit the training set well, the gap between training and validation accuracy became the thing to watch &mdash; dropout and batch normalization each closed that gap in different ways, and batch norm's rocky first epoch (validation accuracy briefly fell to around 28% before recovering) was a reminder that "the first epoch looks broken" isn't always a sign to abandon a change.</p>
+
+    <h2>The winning architecture</h2>
+    <p>The best-performing network paired every convolution with batch normalization and used two convolutional layers per resolution before pooling, so the network extracts more features at each scale before it throws spatial information away:</p>
+
+    <figure>
+      <svg class="arch-diagram" viewBox="0 0 640 836" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Final CNN architecture diagram">
+<rect x="40" y="30" width="340" height="56" rx="6" fill="#ffffff" stroke="#d9dfdd" stroke-width="1.2"/>
+<text x="58" y="54.0" font-family="IBM Plex Mono, monospace" font-size="14" font-weight="600" fill="#171b20">Input</text>
+<text x="58" y="74.0" font-family="IBM Plex Mono, monospace" font-size="11.5" fill="#5b6672">28×28×1 grayscale pixel grid</text>
+<text x="408" y="62.0" font-family="IBM Plex Mono, monospace" font-size="12.5" fill="#5b6672" text-anchor="start">28×28×1</text>
+<rect x="40" y="120" width="340" height="56" rx="6" fill="#e2ebf1" stroke="#1e435f" stroke-width="1.2"/>
+<text x="58" y="144.0" font-family="IBM Plex Mono, monospace" font-size="14" font-weight="600" fill="#171b20">Conv 3×3, 32 filters + BatchNorm</text>
+<text x="58" y="164.0" font-family="IBM Plex Mono, monospace" font-size="11.5" fill="#5b6672">same padding, ReLU</text>
+<circle cx="360" cy="138" r="14" fill="#a8402b" opacity="0.0"/>
+<text x="360" y="142" font-family="IBM Plex Mono, monospace" font-size="12" font-weight="600" fill="#171b20" text-anchor="middle" opacity="0.55">×2</text>
+<text x="408" y="152.0" font-family="IBM Plex Mono, monospace" font-size="12.5" fill="#5b6672" text-anchor="start">28×28×32</text>
+<rect x="40" y="210" width="340" height="56" rx="6" fill="#f1f4f2" stroke="#d9dfdd" stroke-width="1.2"/>
+<text x="58" y="243.0" font-family="IBM Plex Mono, monospace" font-size="14" font-weight="600" fill="#171b20">MaxPool 2×2 + Dropout 0.25</text>
+<text x="408" y="242.0" font-family="IBM Plex Mono, monospace" font-size="12.5" fill="#5b6672" text-anchor="start">14×14×32</text>
+<rect x="40" y="300" width="340" height="56" rx="6" fill="#e2ebf1" stroke="#1e435f" stroke-width="1.2"/>
+<text x="58" y="324.0" font-family="IBM Plex Mono, monospace" font-size="14" font-weight="600" fill="#171b20">Conv 3×3, 64 filters + BatchNorm</text>
+<text x="58" y="344.0" font-family="IBM Plex Mono, monospace" font-size="11.5" fill="#5b6672">same padding, ReLU</text>
+<circle cx="360" cy="318" r="14" fill="#a8402b" opacity="0.0"/>
+<text x="360" y="322" font-family="IBM Plex Mono, monospace" font-size="12" font-weight="600" fill="#171b20" text-anchor="middle" opacity="0.55">×2</text>
+<text x="408" y="332.0" font-family="IBM Plex Mono, monospace" font-size="12.5" fill="#5b6672" text-anchor="start">14×14×64</text>
+<rect x="40" y="390" width="340" height="56" rx="6" fill="#f1f4f2" stroke="#d9dfdd" stroke-width="1.2"/>
+<text x="58" y="423.0" font-family="IBM Plex Mono, monospace" font-size="14" font-weight="600" fill="#171b20">MaxPool 2×2 + Dropout 0.25</text>
+<text x="408" y="422.0" font-family="IBM Plex Mono, monospace" font-size="12.5" fill="#5b6672" text-anchor="start">7×7×64</text>
+<rect x="40" y="480" width="340" height="56" rx="6" fill="#ffffff" stroke="#d9dfdd" stroke-width="1.2"/>
+<text x="58" y="504.0" font-family="IBM Plex Mono, monospace" font-size="14" font-weight="600" fill="#171b20">Flatten</text>
+<text x="58" y="524.0" font-family="IBM Plex Mono, monospace" font-size="11.5" fill="#5b6672">3,136 nodes</text>
+<text x="408" y="512.0" font-family="IBM Plex Mono, monospace" font-size="12.5" fill="#5b6672" text-anchor="start">3,136</text>
+<rect x="40" y="570" width="340" height="56" rx="6" fill="#e2ebf1" stroke="#1e435f" stroke-width="1.2"/>
+<text x="58" y="594.0" font-family="IBM Plex Mono, monospace" font-size="14" font-weight="600" fill="#171b20">Dense 128 + BatchNorm</text>
+<text x="58" y="614.0" font-family="IBM Plex Mono, monospace" font-size="11.5" fill="#5b6672">ReLU</text>
+<text x="408" y="602.0" font-family="IBM Plex Mono, monospace" font-size="12.5" fill="#5b6672" text-anchor="start">128</text>
+<rect x="40" y="660" width="340" height="56" rx="6" fill="#f1f4f2" stroke="#d9dfdd" stroke-width="1.2"/>
+<text x="58" y="693.0" font-family="IBM Plex Mono, monospace" font-size="14" font-weight="600" fill="#171b20">Dropout 0.5</text>
+<text x="408" y="692.0" font-family="IBM Plex Mono, monospace" font-size="12.5" fill="#5b6672" text-anchor="start">128</text>
+<rect x="40" y="750" width="340" height="56" rx="6" fill="#1e435f" stroke="#1e435f" stroke-width="1.2"/>
+<text x="58" y="774.0" font-family="IBM Plex Mono, monospace" font-size="14" font-weight="600" fill="#ffffff">Dense 10, softmax</text>
+<text x="58" y="794.0" font-family="IBM Plex Mono, monospace" font-size="11.5" fill="#ffffff">one score per digit</text>
+<text x="408" y="782.0" font-family="IBM Plex Mono, monospace" font-size="12.5" fill="#5b6672" text-anchor="start">10</text>
+<line x1="210.0" y1="90" x2="210.0" y2="112" stroke="#5b6672" stroke-width="1.4"/>
+<polygon points="206.0,112 214.0,112 210.0,119" fill="#5b6672"/>
+<line x1="210.0" y1="180" x2="210.0" y2="202" stroke="#5b6672" stroke-width="1.4"/>
+<polygon points="206.0,202 214.0,202 210.0,209" fill="#5b6672"/>
+<line x1="210.0" y1="270" x2="210.0" y2="292" stroke="#5b6672" stroke-width="1.4"/>
+<polygon points="206.0,292 214.0,292 210.0,299" fill="#5b6672"/>
+<line x1="210.0" y1="360" x2="210.0" y2="382" stroke="#5b6672" stroke-width="1.4"/>
+<polygon points="206.0,382 214.0,382 210.0,389" fill="#5b6672"/>
+<line x1="210.0" y1="450" x2="210.0" y2="472" stroke="#5b6672" stroke-width="1.4"/>
+<polygon points="206.0,472 214.0,472 210.0,479" fill="#5b6672"/>
+<line x1="210.0" y1="540" x2="210.0" y2="562" stroke="#5b6672" stroke-width="1.4"/>
+<polygon points="206.0,562 214.0,562 210.0,569" fill="#5b6672"/>
+<line x1="210.0" y1="630" x2="210.0" y2="652" stroke="#5b6672" stroke-width="1.4"/>
+<polygon points="206.0,652 214.0,652 210.0,659" fill="#5b6672"/>
+<line x1="210.0" y1="720" x2="210.0" y2="742" stroke="#5b6672" stroke-width="1.4"/>
+<polygon points="206.0,742 214.0,742 210.0,749" fill="#5b6672"/>
+</svg>
+      <figcaption>Data shape at each stage, from the raw 28&times;28 input down to 10 output scores.</figcaption>
+    </figure>
+
+    <p>We checked the flattened output size deliberately &mdash; 7&times;7&times;64 = 3,136 nodes &mdash; before adding the dense layers. That number matters more than it looks: pool too aggressively and the flatten layer collapses to a few dozen nodes, which means most of the image's information was thrown away before the classifier ever saw it.</p>
+
+    <h2>Results on data the model never trained on</h2>
+    <p>Validation accuracy tells you how a model tunes; it doesn't tell you how it generalizes. Once we picked the winning architecture, we rebuilt it and trained it once more on the full 60,000-image training set, then scored it, once, on the 10,000-image test set it had never seen in any form.</p>
+
+    <div class="stat-row">
+      <div class="stat">
+        <span class="stat-value">99.5%</span>
+        <span class="stat-label">test accuracy</span>
+      </div>
+      <div class="stat">
+        <span class="stat-value">50&thinsp;/&thinsp;10000</span>
+        <span class="stat-label">digits misclassified</span>
+      </div>
+    </div>
+
+    <p>Test accuracy (99.5%) actually edged out the best validation accuracy (99.39%) from the tuning phase. That is not a sign the model generalizes unusually well &mdash; it is mostly what happens when a network's final training run uses <em>all</em> 60,000 images instead of the 80% it saw during tuning, plus ordinary run-to-run noise at this level of accuracy. On a dataset this size, a few extra correct digits move the percentage by hundredths of a point.</p>
+
+    <h3>What the model gets wrong</h3>
+    <p>Of 10,000 test digits, 50 were misclassified. Here are 15 of them, labeled with what they actually were and what the network guessed instead:</p>
+
+    <figure>
+      <img src="{% static 'myapp/images/misclassified.png' %}" alt="Grid of 15 misclassified MNIST digits, each labeled with its true label and the model's prediction">
+      <figcaption>Misclassified test digits &mdash; true label vs. predicted label.</figcaption>
+    </figure>
+
+    <p>Looking through the full confusion matrix makes the pattern clearer than any individual example:</p>
+
+    <figure>
+      <img src="{% static 'myapp/images/confusion_matrix.png' %}" alt="Confusion matrix of true vs predicted digit labels on the MNIST test set">
+      <figcaption>Confusion matrix on the test set. Almost everything sits on the diagonal.</figcaption>
+    </figure>
+
+    <table class="mixup-table">
+      <thead>
+        <tr><th>Mix-up</th><th>True &rarr; predicted</th><th>Count</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="mixup-pair">4 &rarr; 9</td><td>digit 4 read as 9</td><td>6</td></tr>
+        <tr><td class="mixup-pair">9 &rarr; 4</td><td>digit 9 read as 4</td><td>5</td></tr>
+        <tr><td class="mixup-pair">5 &rarr; 3</td><td>digit 5 read as 3</td><td>4</td></tr>
+        <tr><td class="mixup-pair">7 &rarr; 2</td><td>digit 7 read as 2</td><td>3</td></tr>
+        <tr><td class="mixup-pair">7 &rarr; 1</td><td>digit 7 read as 1</td><td>3</td></tr>
+      </tbody>
+    </table>
+
+    <p>The two dominant confusions &mdash; 4 read as 9, and 5 read as 3 &mdash; both come down to stroke shape rather than anything the network failed to learn. An open-topped 4 and a 9 differ mainly by whether the top loop closes; a hastily written 5 and a 3 differ by whether the middle stroke curves all the way around. Several of the 50 misclassified images look genuinely ambiguous even to a human reading them at 28&times;28 resolution &mdash; some are arguably mislabeled in the dataset itself.</p>
+
+    <h3>Will it ever hit 100%?</h3>
+    <p>Realistically, no. MNIST's test set contains a small number of images that are ambiguous or, by most people's reading, mislabeled. A model that scored 100% on this exact test set would be fitting that label noise, not learning to read digits better. Published results on MNIST plateau around 99.7&ndash;99.8% for exactly this reason, which puts our 99.5% in a reasonable, non-overfit range for a project-scale model rather than a heavily-tuned research pipeline.</p>
+
+    <div class="placeholder-block">
+      Pending from Person A: a matched gallery of well-classified, high-confidence digits (one per class) to sit alongside the misclassified grid above, per the assignment spec. Drop the exported PNG into <code>myapp/static/myapp/images/</code> and swap this block for an &lt;img&gt; tag once it exists.
+    </div>
+  </div>
+</article>
+{% endblock %}

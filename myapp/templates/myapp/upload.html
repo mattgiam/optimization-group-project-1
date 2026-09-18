@@ -1,0 +1,81 @@
+{% extends "myapp/base.html" %}
+{% load static %}
+{% block title %}Classify a digit — MNIST Classifier{% endblock %}
+{% block nav_upload %}is-active{% endblock %}
+
+{% block content %}
+<div class="classify-wrap">
+  <h1>Try it yourself</h1>
+  <p class="classify-intro">Upload a CSV of a single handwritten digit and the model below will classify it in real time.</p>
+
+  <div class="format-note">
+    <strong>File format:</strong> a plain <code>.csv</code> with exactly 28 rows and 28 columns, no header row.
+    Each cell is one pixel's brightness &mdash; either 0&ndash;255 or already scaled to 0&ndash;1. Either works;
+    the page detects which one you've given it.
+  </div>
+
+  {% if error %}
+    <div class="alert alert-error">{{ error }}</div>
+  {% endif %}
+
+  <form method="post" enctype="multipart/form-data" action="{% url 'upload' %}" id="upload-form">
+    {% csrf_token %}
+    <div class="upload-zone" id="upload-zone">
+      <p>Drop a CSV here, or choose a file</p>
+      {{ form.csv_file }}
+      <span class="file-name" id="file-name-display"></span>
+    </div>
+    <div class="classify-actions">
+      <button type="submit" class="btn">Classify image</button>
+      <span class="loading-note" id="loading-note"><span class="spinner"></span> Running the model&hellip;</span>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  (function () {
+    var zone = document.getElementById('upload-zone');
+    var input = document.getElementById('{{ form.csv_file.id_for_label }}');
+    var nameDisplay = document.getElementById('file-name-display');
+    var form = document.getElementById('upload-form');
+    var loadingNote = document.getElementById('loading-note');
+
+    function showName(file) {
+      nameDisplay.textContent = file ? file.name : '';
+    }
+
+    input.addEventListener('change', function () {
+      showName(input.files[0]);
+    });
+
+    ['dragenter', 'dragover'].forEach(function (evt) {
+      zone.addEventListener(evt, function (e) {
+        e.preventDefault();
+        zone.classList.add('is-dragover');
+      });
+    });
+
+    ['dragleave', 'drop'].forEach(function (evt) {
+      zone.addEventListener(evt, function (e) {
+        e.preventDefault();
+        zone.classList.remove('is-dragover');
+      });
+    });
+
+    zone.addEventListener('drop', function (e) {
+      var files = e.dataTransfer.files;
+      if (files.length) {
+        input.files = files;
+        showName(files[0]);
+      }
+    });
+
+    form.addEventListener('submit', function () {
+      loadingNote.classList.add('is-visible');
+      form.querySelector('button[type="submit"]').setAttribute('disabled', 'disabled');
+    });
+  })();
+</script>
+{% endblock %}

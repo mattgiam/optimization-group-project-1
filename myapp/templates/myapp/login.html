@@ -1,5 +1,5 @@
 {% extends "myapp/base.html" %}
-{% block title %}Sign in — MNIST Classifier{% endblock %}
+{% block title %}Sign in: MNIST Classifier{% endblock %}
 {% block body_class %}login-page{% endblock %}
 
 {% block content %}
@@ -8,7 +8,7 @@
   <div class="login-card">
     <p class="login-kicker">mnist&#8725;classify</p>
     <h1>Sign in to view the project</h1>
-    <p class="login-copy">This site is restricted to the course team and the grader. There's no self-serve signup &mdash; use the account you were given.</p>
+    <p class="login-copy">This site is restricted to the course team and the grader. There's no self-serve signup, so use the account you were given.</p>
 
     {% if form.non_field_errors %}
       <div class="alert alert-error">{{ form.non_field_errors.0 }}</div>

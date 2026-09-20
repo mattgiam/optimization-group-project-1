@@ -1,6 +1,6 @@
 {% extends "myapp/base.html" %}
 {% load static %}
-{% block title %}How we taught a network to read handwriting &mdash; MNIST Classifier{% endblock %}
+{% block title %}How we taught a network to read handwriting: MNIST Classifier{% endblock %}
 {% block nav_about %}is-active{% endblock %}
 
 {% block content %}
@@ -12,7 +12,7 @@
   </div>
 
   <div class="article-body">
-    <p>MNIST is 70,000 small grayscale images of handwritten digits, each one a 28&times;28 grid of pixel intensities. The goal for this project was simple to state and harder to hit: build a network that classifies these digits correctly more than 99% of the time. We got there, then kept going &mdash; the final model scores 99.5% on digits it never trained on.</p>
+    <p>MNIST is 70,000 small grayscale images of handwritten digits, each one a 28&times;28 grid of pixel intensities. The goal for this project was simple to state and harder to hit: build a network that classifies these digits correctly more than 99% of the time. We got there, then kept going, and the final model scores 99.5% on digits it never trained on.</p>
     <p>What follows is the path we took to get there: the architectures we tried, what each one told us about what to fix next, and what the model still gets wrong.</p>
 
     <h2>Starting simple, adding one idea at a time</h2>
@@ -24,7 +24,7 @@
         <div class="step-content">
           <p class="step-name">Dense baseline</p>
           <p class="step-detail">Flatten &rarr; Dense(128) &rarr; Dropout &rarr; Dense(64) &rarr; Dense(10)</p>
-          <p class="step-note">No convolution yet &mdash; just a number to beat.</p>
+          <p class="step-note">No convolution yet, just a number to beat.</p>
         </div>
         <span class="step-score">97.71%</span>
       </li>
@@ -51,7 +51,7 @@
         <div class="step-content">
           <p class="step-name">Fight overfitting</p>
           <p class="step-detail">Same shape, with dropout after each block and before the output layer</p>
-          <p class="step-note">Training accuracy had started running ahead of validation &mdash; dropout closed the gap.</p>
+          <p class="step-note">Training accuracy had started running ahead of validation, and dropout closed the gap.</p>
         </div>
         <span class="step-score">99.23%</span>
       </li>
@@ -66,7 +66,7 @@
       </li>
     </ol>
 
-    <p>Two patterns showed up repeatedly. First, the assignment's tip held up in practice: stacking more, smaller convolutional layers helped more than making any single layer bigger. Second, once the network had enough capacity to fit the training set well, the gap between training and validation accuracy became the thing to watch &mdash; dropout and batch normalization each closed that gap in different ways, and batch norm's rocky first epoch (validation accuracy briefly fell to around 28% before recovering) was a reminder that "the first epoch looks broken" isn't always a sign to abandon a change.</p>
+    <p>Two patterns showed up repeatedly. First, the assignment's tip held up in practice: stacking more, smaller convolutional layers helped more than making any single layer bigger. Second, once the network had enough capacity to fit the training set well, the gap between training and validation accuracy became the thing to watch. Dropout and batch normalization each closed that gap in different ways, and batch norm's rocky first epoch (validation accuracy briefly fell to around 28% before recovering) was a reminder that "the first epoch looks broken" isn't always a sign to abandon a change.</p>
 
     <h2>The winning architecture</h2>
     <p>The best-performing network paired every convolution with batch normalization and used two convolutional layers per resolution before pooling, so the network extracts more features at each scale before it throws spatial information away:</p>
@@ -130,7 +130,7 @@
       <figcaption>Data shape at each stage, from the raw 28&times;28 input down to 10 output scores.</figcaption>
     </figure>
 
-    <p>We checked the flattened output size deliberately &mdash; 7&times;7&times;64 = 3,136 nodes &mdash; before adding the dense layers. That number matters more than it looks: pool too aggressively and the flatten layer collapses to a few dozen nodes, which means most of the image's information was thrown away before the classifier ever saw it.</p>
+    <p>We checked the flattened output size deliberately (7&times;7&times;64 = 3,136 nodes) before adding the dense layers. That number matters more than it looks: pool too aggressively and the flatten layer collapses to a few dozen nodes, which means most of the image's information was thrown away before the classifier ever saw it.</p>
 
     <h2>Results on data the model never trained on</h2>
     <p>Validation accuracy tells you how a model tunes; it doesn't tell you how it generalizes. Once we picked the winning architecture, we rebuilt it and trained it once more on the full 60,000-image training set, then scored it, once, on the 10,000-image test set it had never seen in any form.</p>
@@ -146,14 +146,14 @@
       </div>
     </div>
 
-    <p>Test accuracy (99.5%) actually edged out the best validation accuracy (99.39%) from the tuning phase. That is not a sign the model generalizes unusually well &mdash; it is mostly what happens when a network's final training run uses <em>all</em> 60,000 images instead of the 80% it saw during tuning, plus ordinary run-to-run noise at this level of accuracy. On a dataset this size, a few extra correct digits move the percentage by hundredths of a point.</p>
+    <p>Test accuracy (99.5%) actually edged out the best validation accuracy (99.39%) from the tuning phase. That is not a sign the model generalizes unusually well. It is mostly what happens when a network's final training run uses <em>all</em> 60,000 images instead of the 80% it saw during tuning, plus ordinary run-to-run noise at this level of accuracy. On a dataset this size, a few extra correct digits move the percentage by hundredths of a point.</p>
 
     <h3>What the model gets wrong</h3>
     <p>Of 10,000 test digits, 50 were misclassified. Here are 15 of them, labeled with what they actually were and what the network guessed instead:</p>
 
     <figure>
       <img src="{% static 'myapp/images/misclassified.png' %}" alt="Grid of 15 misclassified MNIST digits, each labeled with its true label and the model's prediction">
-      <figcaption>Misclassified test digits &mdash; true label vs. predicted label.</figcaption>
+      <figcaption>Misclassified test digits: true label vs. predicted label.</figcaption>
     </figure>
 
     <p>Looking through the full confusion matrix makes the pattern clearer than any individual example:</p>
@@ -176,11 +176,18 @@
       </tbody>
     </table>
 
-    <p>The two dominant confusions &mdash; 4 read as 9, and 5 read as 3 &mdash; both come down to stroke shape rather than anything the network failed to learn. An open-topped 4 and a 9 differ mainly by whether the top loop closes; a hastily written 5 and a 3 differ by whether the middle stroke curves all the way around. Several of the 50 misclassified images look genuinely ambiguous even to a human reading them at 28&times;28 resolution &mdash; some are arguably mislabeled in the dataset itself.</p>
+    <p>The two dominant confusions (4 read as 9, and 5 read as 3) both come down to stroke shape rather than anything the network failed to learn. An open-topped 4 and a 9 differ mainly by whether the top loop closes; a hastily written 5 and a 3 differ by whether the middle stroke curves all the way around. Several of the 50 misclassified images look genuinely ambiguous even to a human reading them at 28&times;28 resolution, and some are arguably mislabeled in the dataset itself.</p>
+
+    <h3>What the model gets right</h3>
+    <p>The misclassified grid above is the interesting failure case, but it is worth seeing the ordinary case too: one example from each digit class, correctly classified with full confidence.</p>
+
+    <figure>
+      <img src="{% static 'myapp/images/well_classified.png' %}" alt="Grid of 10 correctly classified MNIST digits, one per class, each at 100% confidence">
+      <figcaption>One correctly classified example per digit, 0 through 9, each at 100% confidence.</figcaption>
+    </figure>
 
     <h3>Will it ever hit 100%?</h3>
     <p>Realistically, no. MNIST's test set contains a small number of images that are ambiguous or, by most people's reading, mislabeled. A model that scored 100% on this exact test set would be fitting that label noise, not learning to read digits better. Published results on MNIST plateau around 99.7&ndash;99.8% for exactly this reason, which puts our 99.5% in a reasonable, non-overfit range for a project-scale model rather than a heavily-tuned research pipeline.</p>
-
   </div>
 </article>
 {% endblock %}

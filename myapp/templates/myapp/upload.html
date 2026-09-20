@@ -1,6 +1,6 @@
 {% extends "myapp/base.html" %}
 {% load static %}
-{% block title %}Classify a digit — MNIST Classifier{% endblock %}
+{% block title %}Classify a digit: MNIST Classifier{% endblock %}
 {% block nav_upload %}is-active{% endblock %}
 
 {% block content %}
@@ -10,7 +10,7 @@
 
   <div class="format-note">
     <strong>File format:</strong> a plain <code>.csv</code> with exactly 28 rows and 28 columns, no header row.
-    Each cell is one pixel's brightness &mdash; either 0&ndash;255 or already scaled to 0&ndash;1. Either works;
+    Each cell is one pixel's brightness, either 0&ndash;255 or already scaled to 0&ndash;1. Either works;
     the page detects which one you've given it.
   </div>
 

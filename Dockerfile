@@ -21,7 +21,7 @@ COPY . .
 
 
 
-RUN python manage.py collectstatic --noinput
+RUN DJANGO_SECRET_KEY=build-only-key python manage.py collectstatic --noinput
 
 
 
